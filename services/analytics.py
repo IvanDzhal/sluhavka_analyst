@@ -44,25 +44,20 @@ def shop_name(code: str) -> str:
 
 # ── Вечірній звіт за день ─────────────────────────────────────────────────────
 
-def format_evening_report(all_data: dict) -> str:
+def format_evening_report(all_data: dict, show_focus: bool = True) -> str:
     today = date.today().strftime("%d.%m.%Y")
     lines = [f"📊 *ПІДСУМКИ ДНЯ | {today}*", ""]
 
     for code, d in sorted(all_data.items()):
         name = shop_name(code)
         lines.append(f"🏪 *{name} ({code})*")
-
-        # Продажі за день
         lines.append(
             f"Продажі за день:\n"
             f"  ТО: +{int(d['day_to']):,} грн  "
-            f"МТ: +{int(d['day_mt']):,} грн  "
-            f"Акс: +{int(d['day_aks']):,} грн\n"
+            f"МТ: +{int(d['day_mt']):,} грн  Акс: +{int(d['day_aks']):,} грн\n"
             f"  Послуги: +{int(d['day_service']):,} грн  "
             f"Гарантія: +{int(d['day_guarantee']):,} грн"
         )
-
-        # Виконання плану з приростом
         lines.append(
             f"Виконання плану:\n"
             f"  ТО: {d['pct_to']}% ({fmt_delta(d['delta_to'])})  "
@@ -71,8 +66,6 @@ def format_evening_report(all_data: dict) -> str:
             f"Послуги: {d['pct_service']}% ({fmt_delta(d['delta_service'])})\n"
             f"  Гарантія: {d['pct_guarantee']}% ({fmt_delta(d['delta_guarantee'])})"
         )
-
-        # Ефективність
         srv_e = emoji_eff_service(d['eff_service'])
         gar_e = emoji_eff_guarantee(d['eff_guarantee'])
         lines.append(
@@ -80,35 +73,41 @@ def format_evening_report(all_data: dict) -> str:
             f"  Послуги/МТ: {srv_e}{d['eff_service']}%  "
             f"Гарантія/МТ: {gar_e}{d['eff_guarantee']}%"
         )
-
         lines.append("━━━━━━━━━━━━━━━")
 
-    # Фокус уваги
-    lines.append("\n📌 *Фокус уваги*")
+    if show_focus:
+        lines.append("")
+        lines += _focus_lines(all_data)
 
-    # Найбільший приріст ТО
+    return "\n".join(lines)
+
+
+def format_focus(all_data: dict) -> str:
+    lines = _focus_lines(all_data)
+    return "\n".join(lines)
+
+
+def _focus_lines(all_data: dict) -> list:
+    lines = ["📌 *Фокус уваги*"]
+
     best_delta = max(all_data.items(), key=lambda x: x[1]["delta_to"])
     lines.append(f"🔥 Найбільший приріст ТО: {shop_name(best_delta[0])} ({fmt_delta(best_delta[1]['delta_to'])})")
 
-    # Найкраще виконання ТО
     best_to = max(all_data.items(), key=lambda x: x[1]["pct_to"])
     lines.append(f"🏆 Найкраще виконання ТО: {shop_name(best_to[0])} ({best_to[1]['pct_to']}%)")
 
-    # Найгірша ефективність послуг
     worst_srv = min(all_data.items(), key=lambda x: x[1]["eff_service"])
     if worst_srv[1]["eff_service"] < EFFICIENCY_THRESHOLDS["services"]["medium"]:
         lines.append(f"⚠️ Найнижча ефективність послуг: {shop_name(worst_srv[0])} ({worst_srv[1]['eff_service']}%)")
 
-    # Найгірша гарантія
     worst_gar = min(all_data.items(), key=lambda x: x[1]["eff_guarantee"])
     if worst_gar[1]["eff_guarantee"] < EFFICIENCY_THRESHOLDS["guarantee"]["alarm"]:
         lines.append(f"⚠️ Найнижча гарантія/МТ: {shop_name(worst_gar[0])} ({worst_gar[1]['eff_guarantee']}%)")
 
-    # Найгірше виконання ТО
     worst_to = min(all_data.items(), key=lambda x: x[1]["pct_to"])
     lines.append(f"⚠️ Найнижче виконання ТО: {shop_name(worst_to[0])} ({worst_to[1]['pct_to']}%)")
 
-    return "\n".join(lines)
+    return lines
 
 
 # ── Зведений звіт (по кнопці) ────────────────────────────────────────────────

@@ -13,7 +13,7 @@ from handlers.callbacks import handle_callback
 from services.sheets import get_all_shops_data
 from services.analytics import (
     format_evening_report, format_morning_briefing,
-    get_alerts, calculate_kpi, format_kpi_report
+    get_alerts, format_focus
 )
 
 load_dotenv()
@@ -55,12 +55,16 @@ async def send_evening_report(bot: Bot):
             await bot.send_message(CHAT_ID, "❌ Не вдалося зібрати вечірній звіт.")
             return
 
-        # Ділимо на частини по 5 магазинів щоб не перевищити ліміт Telegram
+        # Магазини без фокусу уваги
         shops_list = list(all_data.items())
         for i in range(0, len(shops_list), 5):
             chunk = dict(shops_list[i:i + 5])
-            text = format_evening_report(chunk)
+            text = format_evening_report(chunk, show_focus=False)
             await bot.send_message(CHAT_ID, text, parse_mode=ParseMode.MARKDOWN)
+
+        # Фокус уваги окремо — по всіх магазинах
+        focus = format_focus(all_data)
+        await bot.send_message(CHAT_ID, focus, parse_mode=ParseMode.MARKDOWN)
 
         # Алярми
         alerts = get_alerts(all_data)
@@ -71,12 +75,7 @@ async def send_evening_report(bot: Bot):
                 parse_mode=ParseMode.MARKDOWN,
             )
 
-        # Головне меню в кінці
-        await bot.send_message(
-            CHAT_ID, "✅ Звіт готово",
-            parse_mode=ParseMode.MARKDOWN,
-            reply_markup=main_menu(),
-        )
+        await bot.send_message(CHAT_ID, "✅ Звіт готово", reply_markup=main_menu())
 
     except Exception as e:
         logger.error(f"Помилка вечірнього звіту: {e}")
