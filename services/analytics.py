@@ -52,14 +52,14 @@ def format_evening_report(all_data: dict, show_focus: bool = True) -> str:
         name = shop_name(code)
         lines.append(f"🏪 *{name} ({code})*")
         lines.append(
-            f"Продажі за день:\n"
+            f"*Продажі за день:*\n"
             f"  ТО: +{int(d['day_to']):,} грн  "
             f"МТ: +{int(d['day_mt']):,} грн  Акс: +{int(d['day_aks']):,} грн\n"
             f"  Послуги: +{int(d['day_service']):,} грн  "
             f"Гарантія: +{int(d['day_guarantee']):,} грн"
         )
         lines.append(
-            f"Виконання плану:\n"
+            f"*Виконання плану:*\n"
             f"  ТО: {d['pct_to']}% ({fmt_delta(d['delta_to'])})  "
             f"МТ: {d['pct_mt']}% ({fmt_delta(d['delta_mt'])})\n"
             f"  Акс: {d['pct_aks']}% ({fmt_delta(d['delta_aks'])})  "
@@ -69,7 +69,7 @@ def format_evening_report(all_data: dict, show_focus: bool = True) -> str:
         srv_e = emoji_eff_service(d['eff_service'])
         gar_e = emoji_eff_guarantee(d['eff_guarantee'])
         lines.append(
-            f"Ефективність:\n"
+            f"*Ефективність:*\n"
             f"  Послуги/МТ: {srv_e}{d['eff_service']}%  "
             f"Гарантія/МТ: {gar_e}{d['eff_guarantee']}%"
         )
